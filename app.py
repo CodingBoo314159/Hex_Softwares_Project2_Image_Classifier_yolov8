@@ -1,32 +1,27 @@
 import gradio as gr
 from ultralytics import YOLO
 
-# Load model ONCE (important for preventing flickering)
+# Load model once (important for stability + no flicker)
 model = YOLO("last.pt")
 
 def predict(image):
     if image is None:
         return {}
 
-    # Run inference
     results = model(image)
 
-    # Extract class names + probabilities
     names = results[0].names
     probs = results[0].probs.data.tolist()
 
-    # Convert to dictionary for Gradio Label output
+    # return dictionary for UI display
     return {names[i]: float(probs[i]) for i in range(len(probs))}
 
-# Build interface
 demo = gr.Interface(
     fn=predict,
     inputs=gr.Image(type="pil"),
-    outputs=gr.Label(num_top_classes=4),
+    outputs=gr.JSON(),   # FIX: removes flicker caused by gr.Label
     title="Weather Classifier",
-    description="Upload an image to classify the weather condition",
-    allow_flagging="never"
+    description="Upload an image to classify the weather condition"
 )
 
-# Launch app (no SSR mode — keeps it stable on Spaces)
 demo.launch()
